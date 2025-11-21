@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vær Stavanger: Hva skjer i dag? Dagens Møtepunkt</title>
+    <meta name="description" content="Ser du etter været i Stavanger eller lurer på hva du skal gjøre? Få dagens værmelding PLUSS ukens unike, sosiale møtepunkter.">
+    
+    <style>
+        :root {
+            --bg-color: #F4F7F6;
+            --text-color: #333333;
+            --action-color: #2A9D8F;
+            --action-hover: #268C80;
+            --accent-color: #E9C46A;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --english-text: #6c757d;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 1rem auto;
+            padding: 0 1rem;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        header { text-align: center; margin-bottom: 1.5rem; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        .english-title { font-size: 1rem; color: var(--english-text); margin-top: 0; font-weight: normal; }
+        #weather-display { font-size: 1.5rem; color: var(--accent-color); font-weight: bold; }
+        
+        .intro-text {
+            text-align: center;
+            margin: 0 auto 2rem auto;
+            max-width: 600px;
+            line-height: 1.4;
+            font-size: 1rem;
+        }
+        .intro-text p { margin: 0.5rem 0; }
+        .intro-text .en {
+            font-size: 0.85rem;
+            color: var(--english-text);
+            display: block;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .cards-wrapper { display: grid; grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
+        @media (min-width: 750px) {
+            .cards-wrapper { grid-template-columns: 3fr 2fr; }
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .card.secondary {
+            background-color: var(--bg-color);
+            box-shadow: none;
+            border-style: dashed;
+        }
+        .card h2 { margin-top: 0; color: var(--action-color); }
+        .card h2 .en { font-size: 1rem; display: block; font-weight: normal; }
+        .card p { margin: 0.75rem 0; font-size: 1.1rem; line-height: 1.6; }
+        .card p .en { font-size: 0.9rem; color: var(--english-text); display: block; margin-top: 0.2rem; }
+        hr { border: none; border-top: 1px solid var(--border-color); margin: 2.5rem 0; }
+        textarea { width: 100%; box-sizing: border-box; padding: 0.75rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px; }
+        button { width: 100%; padding: 1rem; font-size: 1.2rem; font-weight: bold; color: #fff; background-color: var(--action-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        button .en { font-size: 0.9rem; font-weight: normal; display: block; opacity: 0.8; }
+        button:hover { background-color: var(--action-hover); }
+        #stories-container div { background-color: var(--card-bg); border-left: 4px solid var(--action-color); padding: 1rem; margin-bottom: 1rem; font-style: italic; }
+        #stories-container div span { display: block; font-style: normal; font-size: 0.8rem; color: var(--english-text); text-align: right; margin-top: 0.5rem; }
+        #loading, #no-reports { text-align: center; color: var(--english-text); padding: 1rem; }
+        #no-reports .en { display: block; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="main-heading"></h1>
+        <h2 class="english-title" id="main-heading-en"></h2>
+        <div id="weather-display">Laster vær...</div>
+    </header>
+
+    <div class="intro-text">
+        <p>Lurer du på hva du skal gjøre i dag? Vårt mål er å gjøre det lettere å si "hei".</p>
+        <p><strong>Slik funker det:</strong> 1. Ha dagens "signal"-produkt i hånden. 2. Ser du en annen med det samme? Si "Sunt valg!" for å starte en samtale.</p>
+        <p class="en">Wondering what to do today? Our goal is to make it easier to say "hello".<br><strong>How it works:</strong> 1. Have today's "signal" product in your hand. 2. See someone else with the same? Say "Healthy choice!" to start a conversation.</p>
+    </div>
+
+    <div class="cards-wrapper">
+        <div id="main-card" class="card main" style="display:none;">
+            <!-- Content is loaded by JavaScript -->
+        </div>
+        <div id="joker-card" class="card secondary" style="display:none;">
+            <!-- Content is loaded by JavaScript -->
+        </div>
+    </div>
+
+    <hr>
+
+    <div id="feedback-section">
+        <h2>SEND DIN RAPPORT <span class="en" style="display:block; font-size: 1rem;">SEND YOUR REPORT</span></h2>
+        <form id="storyForm">
+            <textarea name="story" rows="3" placeholder="Jeg møtte noen! Vi..." required></textarea><br>
+            <button type="submit">Send Anonymt<span class="en">Send Anonymously</span></button>
+        </form>
+    </div>
+    
+    <div id="stories-section">
+        <h2>SISTE 10 RAPPORTER <span class="en" style="display:block; font-size: 1rem;">LATEST 10 REPORTS</span></h2>
+        <div id="stories-container">
+            <div id="loading">Laster inn rapporter...</div>
+            <div id="no-reports" style="display:none;">Ingen rapporter ennå. Vær den første!<span class="en">No reports yet. Be the first!</span></div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzy37hrRHuWzCcU_4rdECgAtWlix8pI7HeL_ci73R1nUPshEi3CyTLPRTCoS1EaVrnJ/exec';
+
+        function setDate() {
+            const today = new Date();
+            const options_no = { weekday: 'long', day: 'numeric', month: 'long' };
+            const options_en = { weekday: 'long', day: 'numeric', month: 'long' };
+            document.getElementById('main-heading').textContent = `Dagens Møtepunkt: ${today.toLocaleDateString('nb-NO', options_no)}`;
+            document.getElementById('main-heading-en').textContent = `Today's Meeting Point: ${today.toLocaleDateString('en-US', options_en)}`;
+        }
+
+        async function fetchWeather() {
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=58.97&longitude=5.73&current_weather=true');
+                const data = await response.json();
+                const weather = data.current_weather;
+                document.getElementById('weather-display').textContent = `Stavanger: ${weather.temperature}°C`;
+            } catch (error) {
+                document.getElementById('weather-display').textContent = 'Været er utilgjengelig / Weather unavailable';
+                console.error('Weather fetch error:', error);
+            }
+        }
+
+        async function fetchMeetings() {
+            const mainCard = document.getElementById('main-card');
+            const jokerCard = document.getElementById('joker-card');
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=getMeetings`);
+                const data = await response.json();
+                
+                const today = new Date().toISOString().slice(0, 10);
+                const todaysMeeting = data.find(m => m.date === today);
+
+                if (todaysMeeting) {
+                    mainCard.innerHTML = `
+                        <h2>${todaysMeeting.main_title} <span class="en">${todaysMeeting.main_title_en}</span></h2>
+                        <p><strong>Sted:</strong> ${todaysMeeting.main_place}<span class="en"><strong>Place:</strong> ${todaysMeeting.main_place_en}</span></p>
+                        <p><strong>Tid:</strong> ${todaysMeeting.main_time}<span class="en"><strong>Time:</strong> ${todaysMeeting.main_time}</span></p>
+                        <p><strong>Signal:</strong> ${todaysMeeting.main_signal}<span class="en"><strong>Signal:</strong> ${todaysMeeting.main_signal_en}</span></p>
+                        <p><strong>Handling:</strong> ${todaysMeeting.main_action}<span class="en"><strong>Action:</strong> ${todaysMeeting.main_action_en}</span></p>
+                    `;
+                    mainCard.style.display = 'block';
+
+                    if (todaysMeeting.joker_title && todaysMeeting.joker_title !== "") {
+                        jokerCard.innerHTML = `
+                            <h2>${todaysMeeting.joker_title} <span class="en">${todaysMeeting.joker_title_en}</span></h2>
+                            <p><strong>Sted:</strong> ${todaysMeeting.joker_place}<span class="en"><strong>Place:</strong> ${todaysMeeting.joker_place_en}</span></p>
+                            <p><strong>Tid:</strong> ${todaysMeeting.joker_time}<span class="en"><strong>Time:</strong> ${todaysMeeting.joker_time}</span></p>
+                            <p><strong>Signal:</strong> ${todaysMeeting.joker_signal}<span class="en"><strong>Signal:</strong> ${todaysMeeting.joker_signal_en}</span></p>
+                            <p><strong>Handling:</strong> ${todaysMeeting.joker_action}<span class="en"><strong>Action:</strong> ${todaysMeeting.joker_action_en}</span></p>
+                        `;
+                        jokerCard.style.display = 'block';
+                    }
+                } else {
+                    mainCard.innerHTML = '<h2>Ingen samling i dag. Sjekk igjen neste onsdag, fredag eller lørdag!<span class="en" style="display:block;">No gathering today. Check back next Wednesday, Friday or Saturday!</span></h2>';
+                    mainCard.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching meetings:', error);
+                mainCard.innerHTML = '<h2>Kunne ikke laste dagens møtepunkt.<span class="en" style="display:block;">Could not load today\'s meeting point.</span></h2>';
+                mainCard.style.display = 'block';
+            }
+        }
+        
+        async function loadStories() {
+            const storiesContainer = document.getElementById('stories-container');
+            const loadingDiv = document.getElementById('loading');
+            const noReportsDiv = document.getElementById('no-reports');
+            
+            loadingDiv.style.display = 'block';
+            noReportsDiv.style.display = 'none';
+            storiesContainer.querySelectorAll('div:not(#loading):not(#no-reports)').forEach(el => el.remove());
+
+            try {
+                const response = await fetch(WEB_APP_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const stories = await response.json();
+                
+                loadingDiv.style.display = 'none';
+                if (!stories || stories.length === 0 || (stories.error)) {
+                    noReportsDiv.style.display = 'block';
+                    return;
+                }
+
+                stories.forEach(story => {
+                    const storyDiv = document.createElement('div');
+                    storyDiv.innerHTML = `<p>"${story.story}"</p><span>Rapportert kl. ${story.timestamp} / Reported at ${story.timestamp}</span>`;
+                    storiesContainer.appendChild(storyDiv);
+                });
+            } catch (error) {
+                console.error('Error loading stories:', error);
+                loadingDiv.style.display = 'none';
+                noReportsDiv.innerHTML = 'Kunne ikke laste inn rapporter.<span class="en">Could not load reports.</span>';
+                noReportsDiv.style.display = 'block';
+            }
+        }
+
+        document.getElementById('storyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const storyText = e.target.story.value;
+            const submitButton = e.target.querySelector('button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Sender...';
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: new URLSearchParams({ 'story': storyText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    e.target.story.value = '';
+                    submitButton.innerHTML = 'Takk!<span class="en">Thank you!</span>';
+                    setTimeout(() => {
+                        loadStories();
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Send Anonymt<span class="en">Send Anonymously</span>';
+                    }, 1500);
+                } else { throw new Error(data.error || 'Unknown error'); }
+            })
+            .catch(error => {
+                console.error('Error submitting story:', error);
+                submitButton.innerHTML = 'Feil - Prøv igjen<span class="en">Error - Try again</span>';
+                submitButton.disabled = false;
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setDate();
+            fetchWeather();
+            fetchMeetings();
+            loadStories();
+        });
+    </script>
+    
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": "Stavanger Connect: Dagens Samling",
+      "startDate": "2025-11-21",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "location": [
+        {
+            "@type": "Place",
+            "name": "Stavanger",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Stavanger",
+              "addressCountry": "NO"
+            }
+        },
+        {
+            "@type": "Place",
+            "name": "Sandnes",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Sandnes",
+              "addressCountry": "NO"
+            }
+        }
+      ],
+      "description": "Et ukentlig, uformelt møtepunkt for folk i Stavanger og Sandnes. Se dagens sted og signal på vår nettside.",
+      "organizer": {
+        "@type": "Organization",
+        "name": "Stavanger Connect",
+        "url": "YOUR_WEBSITE_URL"
+      },
+      "inLanguage": ["no", "en"]
+    }
+    </script>
+
+</body>
+</html>
