@@ -148,7 +148,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyJ99ZGdixBtXpEpmDtJHAUCofDWzXnYNX20xBKsDwwXIc7d3DLjffnXgM-yQtCcoDV/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzoDTfwEHoE6WvmVWw46l_GRgYvnN2iy6GRaugr8GfT61GWg6swzBz3CGoiA86okGK_/exec';
 
         function setDate() {
             const today = new Date();
@@ -170,17 +170,14 @@
             }
         }
 
-        async function fetchMeetings() {
+                async function fetchMeetings() {
             const mainCard = document.getElementById('main-card');
             const jokerCard = document.getElementById('joker-card');
             try {
                 const response = await fetch(`${WEB_APP_URL}?action=getMeetings`);
-                const data = await response.json();
+                const todaysMeeting = await response.json();
                 
-                const today = new Date().toISOString().slice(0, 10);
-                const todaysMeeting = data.find(m => m.date === today);
-
-                if (todaysMeeting) {
+                if (todaysMeeting && todaysMeeting.date) {
                     mainCard.innerHTML = `
                         <h2>${todaysMeeting.main_title} <span class="en">${todaysMeeting.main_title_en}</span></h2>
                         <p><strong>Sted:</strong> ${todaysMeeting.main_place}<span class="en"><strong>Place:</strong> ${todaysMeeting.main_place_en}</span></p>
@@ -201,7 +198,9 @@
                         jokerCard.style.display = 'block';
                     }
                 } else {
-                    mainCard.innerHTML = '<h2>Ingen samling i dag. Sjekk igjen neste onsdag, fredag eller lørdag!<span class="en" style="display:block;">No gathering today. Check back next Wednesday, Friday or Saturday!</span></h2>';
+                    mainCard.innerHTML = '<h2>Ingen samling i dag.   
+<small>Neste møter er planlagt for onsdag, fredag og lørdag. Sjekk innom på en av de dagene!</small><span class="en" style="display:block;">No gathering today.   
+<small>Our next meetups are scheduled for Wednesday, Friday, and Saturday. Check back on one of those days!</small></span></h2>';
                     mainCard.style.display = 'block';
                 }
             } catch (error) {
@@ -324,6 +323,7 @@
 </body>
 
 </html>
+
 
 
 
